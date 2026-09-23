@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #26262d transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #26262d;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #38383f;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #09090b;
+  color: #e4e4e7;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+  /*
+   * Flat, clearly-bordered surface — no blur. A light, near-invisible
+   * top highlight plus a soft downward shadow reads as "raised card"
+   * without the glassmorphism/neon look.
+   */
+  .glass {
+    @apply bg-ink-800 border border-white/[0.06] shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset];
+  }
+  .glass-card {
+    @apply bg-ink-800 border border-white/[0.06] rounded-xl shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset,0_1px_2px_rgba(0,0,0,0.4)];
+  }
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .skeleton {
+    @apply bg-gradient-to-r from-ink-700 via-ink-600 to-ink-700;
+    background-size: 1000px 100%;
+    animation: shimmer 1.6s infinite linear;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
