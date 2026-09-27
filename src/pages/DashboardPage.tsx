@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CircuitBoard,
   Wifi,
@@ -29,17 +29,17 @@ import { Button } from '@/components/ui/Button';
 
 export function DashboardPage() {
   const {
-  events: liveEvents,
-  devices: liveDevices,
-  sensors: liveSensors,
-  actuators: liveActuators,
-  automations: liveAutomations,
-  setInitialDevices,
-  setInitialSensors,
-  setInitialActuators,
-  setInitialAutomations,
-  setInitialEvents,
-} = useRealtime();
+    events: liveEvents,
+    devices: liveDevices,
+    sensors: liveSensors,
+    actuators: liveActuators,
+    automations: liveAutomations,
+    setInitialDevices,
+    setInitialSensors,
+    setInitialActuators,
+    setInitialAutomations,
+    setInitialEvents,
+  } = useRealtime();
 
   const {
     data: devices,
@@ -58,6 +58,23 @@ export function DashboardPage() {
 
   const primaryDevice = allDevices[0];
 
+  // Stable key that only changes when the SET of device IDs changes —
+  // not when a device's fields (status, lastSeen, ipAddress, etc.) get
+  // updated over the WebSocket. Without this, every realtime device
+  // update was creating a new `allDevices` array, which was creating
+  // new loadSensors/loadActuators callbacks, which was re-firing the
+  // effects below and re-hitting the REST API on every telemetry tick —
+  // this is what was making the dashboard look like it kept reloading.
+  const deviceIdsKey = useMemo(
+    () => allDevices.map((d) => d._id).sort().join(','),
+    [allDevices],
+  );
+
+  // Lets loadSensors/loadActuators read the latest device list without
+  // needing it as a reactive dependency.
+  const allDevicesRef = useRef(allDevices);
+  allDevicesRef.current = allDevices;
+
   const [sensorsLoading, setSensorsLoading] = useState(false);
   const [sensorsError, setSensorsError] = useState<unknown>(null);
 
@@ -65,7 +82,8 @@ export function DashboardPage() {
   const [actuatorsError, setActuatorsError] = useState<unknown>(null);
 
   const loadSensors = useCallback(async () => {
-    if (allDevices.length === 0) {
+    const currentDevices = allDevicesRef.current;
+    if (currentDevices.length === 0) {
       setSensorsLoading(false);
       return;
     }
@@ -75,7 +93,7 @@ export function DashboardPage() {
 
     try {
       await Promise.all(
-        allDevices.map(async (device) => {
+        currentDevices.map(async (device) => {
           const sensors = await sensorApi.listByDevice(device._id);
           setInitialSensors(device._id, sensors);
         }),
@@ -86,10 +104,11 @@ export function DashboardPage() {
     } finally {
       setSensorsLoading(false);
     }
-  }, [allDevices, setInitialSensors]);
+  }, [setInitialSensors]);
 
   const loadActuators = useCallback(async () => {
-    if (allDevices.length === 0) {
+    const currentDevices = allDevicesRef.current;
+    if (currentDevices.length === 0) {
       setActuatorsLoading(false);
       return;
     }
@@ -99,7 +118,7 @@ export function DashboardPage() {
 
     try {
       await Promise.all(
-        allDevices.map(async (device) => {
+        currentDevices.map(async (device) => {
           const actuators = await actuatorApi.listByDevice(device._id);
           setInitialActuators(device._id, actuators);
         }),
@@ -110,15 +129,17 @@ export function DashboardPage() {
     } finally {
       setActuatorsLoading(false);
     }
-  }, [allDevices, setInitialActuators]);
+  }, [setInitialActuators]);
 
+  // Refetch only when the SET of devices actually changes (added/removed),
+  // not on every field update coming through the realtime context.
   useEffect(() => {
     void loadSensors();
-  }, [loadSensors]);
+  }, [deviceIdsKey, loadSensors]);
 
   useEffect(() => {
     void loadActuators();
-  }, [loadActuators]);
+  }, [deviceIdsKey, loadActuators]);
 
   const refetchSensors = loadSensors;
   const refetchActuators = loadActuators;
@@ -137,11 +158,11 @@ export function DashboardPage() {
     onLoaded: setInitialEvents,
   });
 
-void refetchDevices;
+  void refetchDevices;
 
-const onlineCount = allDevices.filter(
-  (d) => d.status === 'online',
-).length;
+  const onlineCount = allDevices.filter(
+    (d) => d.status === 'online',
+  ).length;
 
   const sensorsArray = Object.values(liveSensors);
   const actuatorsArray = Object.values(liveActuators);
@@ -152,20 +173,20 @@ const onlineCount = allDevices.filter(
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard
-  icon={CircuitBoard}
-  label="Devices"
-  value={allDevices.length}
-  loading={devicesLoading && allDevices.length === 0}
-  color="cyan"
-/>
+          icon={CircuitBoard}
+          label="Devices"
+          value={allDevices.length}
+          loading={devicesLoading && allDevices.length === 0}
+          color="cyan"
+        />
 
-<StatCard
-  icon={Wifi}
-  label="Online"
-  value={onlineCount}
-  loading={devicesLoading && allDevices.length === 0}
-  color="green"
-/>
+        <StatCard
+          icon={Wifi}
+          label="Online"
+          value={onlineCount}
+          loading={devicesLoading && allDevices.length === 0}
+          color="green"
+        />
         <StatCard icon={Waves} label="Sensors" value={sensorsArray.length} loading={sensorsLoading} color="blue" />
         <StatCard icon={Volume2} label="Actuators" value={actuatorsArray.length} loading={actuatorsLoading} color="amber" />
         <StatCard icon={Zap} label="Automations" value={activeAutomations.length} loading={automationsLoading} color="violet" />
