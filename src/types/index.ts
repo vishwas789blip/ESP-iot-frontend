@@ -34,36 +34,50 @@ export interface DeviceConfig {
   [key: string]: unknown;
 }
 
+// ---------------------------------------------------------------------------
+// NEW: Hardware interface (sensor/actuator kis tarah ESP32 se juda hai)
+// HardwareConfigFields.tsx ke dropdown ki values isi se match honi chahiye.
+// ---------------------------------------------------------------------------
+export type HardwareInterface = 'gpio' | 'pwm' | 'adc' | 'i2c' | 'spi' | 'uart' | 'custom';
+
+// NEW: Sensor aur Actuator dono ke common hardware fields
+export interface HardwareConfig {
+  interface?: HardwareInterface;                 // default 'gpio'
+  gpio?: number;                                 // single pin (gpio/pwm/adc)
+  pins?: Record<string, number | string>;        // multi-pin, e.g. { sda: 21, scl: 22 }
+  address?: string;                              // I2C address / UART port
+  parameters?: Record<string, unknown>;          // extra settings, e.g. { activeLow: true }
+}
+
 export type SensorType = 'pir' | 'temperature' | 'humidity' | 'light' | 'analog' | 'digital' | string;
 export type SensorStatus = 'active' | 'inactive' | 'error' | 'warning';
 
-export interface Sensor {
+export interface Sensor extends HardwareConfig {
   _id: string;
   deviceId: string;
   name: string;
   type: SensorType;
-  gpio: number;
   value: string | number | boolean | null;
   unit?: string;
   status: SensorStatus;
   lastUpdated?: string;
 }
 
-export type ActuatorType = 'buzzer' | 'relay' | 'led' | 'motor' | 'switch' | string;
+export type ActuatorType = 'buzzer' | 'relay' | 'led' | 'motor' | 'servo' | 'fan' | 'switch' | 'custom' | string;
 
-export interface Actuator {
+export interface Actuator extends HardwareConfig {
   _id: string;
   deviceId: string;
   name: string;
   type: ActuatorType;
-  gpio: number;
   state: string | boolean;
   lastActivated?: string;
 }
 
 export interface CommandPayload {
   command: string;
-  duration?: number;
+  value?: boolean | number | string;   // NEW: PWM duty, servo angle, etc.
+  duration?: number;                   // auto-off seconds
   [key: string]: unknown;
 }
 
