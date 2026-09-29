@@ -369,60 +369,61 @@ export function DeviceDetailsPage() {
         )}
 
         {activeTab === 'configuration' && (
-          <div className="max-w-2xl space-y-6">
-            <div className="glass-card p-6 space-y-6">
+          <div className="max-w-4xl space-y-6">
+            <div className="glass-card p-6 space-y-5">
               <div>
                 <h3 className="text-base font-semibold text-white mb-1">ESP32 Remote Configuration</h3>
-                <p className="text-sm text-gray-500">Changes are sent to the ESP32 via the backend MQTT bridge.</p>
+                <p className="text-sm text-gray-500">
+                  Generic device configuration sent through the backend MQTT bridge.
+                  Hardware IDs are managed by the backend and are not edited here.
+                </p>
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-ink-700/40 border border-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-accent-cyan/10 flex items-center justify-center">
-                    <Waves className="w-5 h-5 text-accent-cyan" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">PIR Motion Sensor</p>
-                    <p className="text-xs text-gray-500">GPIO 26 — Enable/disable motion detection</p>
-                  </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="rounded-xl bg-ink-700/40 border border-white/5 p-4">
+                  <p className="text-xs text-gray-500">Protocol</p>
+                  <p className="text-sm text-white mt-1">{String(config?.protocolVersion ?? '—')}</p>
                 </div>
-                <Toggle
-                  checked={config?.pirEnabled ?? true}
-                  onChange={(checked) => setConfig({ ...config, pirEnabled: checked } as DeviceConfig)}
-                />
+                <div className="rounded-xl bg-ink-700/40 border border-white/5 p-4">
+                  <p className="text-xs text-gray-500">Telemetry</p>
+                  <p className="text-sm text-white mt-1">
+                    {config?.telemetryInterval !== undefined ? `${String(config.telemetryInterval)} ms` : '—'}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-ink-700/40 border border-white/5 p-4">
+                  <p className="text-xs text-gray-500">MQTT Keep Alive</p>
+                  <p className="text-sm text-white mt-1">
+                    {config?.mqttKeepAlive !== undefined ? `${String(config.mqttKeepAlive)} s` : '—'}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-ink-700/40 border border-white/5 p-4">
+                  <p className="text-xs text-gray-500">Auto Reconnect</p>
+                  <p className="text-sm text-white mt-1">
+                    {config?.autoReconnect === undefined ? '—' : config.autoReconnect ? 'Enabled' : 'Disabled'}
+                  </p>
+                </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-ink-700/40 border border-white/5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-accent-amber/10 flex items-center justify-center">
-                    <Volume2 className="w-5 h-5 text-accent-amber" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">Buzzer Duration</p>
-                    <p className="text-xs text-gray-500">GPIO 27 — Default duration in seconds</p>
-                  </div>
+              <div className="grid sm:grid-cols-3 gap-3">
+                <div className="rounded-xl bg-ink-700/40 border border-white/5 p-4">
+                  <p className="text-xs text-gray-500">Sensors</p>
+                  <p className="text-lg font-semibold text-white mt-1">{Array.isArray(config?.sensors) ? config.sensors.length : 0}</p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min={1}
-                    max={60}
-                    value={config?.buzzerDuration ?? 5}
-                    onChange={(e) => setConfig({ ...config, buzzerDuration: Number(e.target.value) } as DeviceConfig)}
-                    className="flex-1 accent-accent-cyan"
-                  />
-                  <div className="flex items-center gap-1.5 bg-ink-700 px-3 py-1.5 rounded-lg">
-                    <span className="text-lg font-bold text-white tabular-nums">{config?.buzzerDuration ?? 5}</span>
-                    <span className="text-xs text-gray-500">sec</span>
-                  </div>
+                <div className="rounded-xl bg-ink-700/40 border border-white/5 p-4">
+                  <p className="text-xs text-gray-500">Actuators</p>
+                  <p className="text-lg font-semibold text-white mt-1">{Array.isArray(config?.actuators) ? config.actuators.length : 0}</p>
+                </div>
+                <div className="rounded-xl bg-ink-700/40 border border-white/5 p-4">
+                  <p className="text-xs text-gray-500">Automations</p>
+                  <p className="text-lg font-semibold text-white mt-1">{Array.isArray(config?.automations) ? config.automations.length : 0}</p>
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-2 border-t border-white/5">
-                <Button variant="ghost" onClick={() => setConfig(device.config || { pirEnabled: true, buzzerDuration: 5 })}>
+                <Button variant="ghost" onClick={() => setConfig(device.config || null)}>
                   Reset
                 </Button>
-                <Button onClick={handleSaveConfig} loading={savingConfig}>
+                <Button onClick={handleSaveConfig} loading={savingConfig} disabled={!config}>
                   <Save className="w-4 h-4" />
                   Save Configuration
                 </Button>
@@ -432,10 +433,10 @@ export function DeviceDetailsPage() {
             <div className="glass-card p-4">
               <p className="text-xs text-gray-500">
                 <Badge variant="cyan" className="mr-2">JSON Preview</Badge>
-                Configuration payload sent to ESP32:
+                Current backend configuration:
               </p>
-              <pre className="text-xs text-accent-cyan font-mono mt-2 p-3 bg-ink-900/60 rounded-lg overflow-x-auto">
-{JSON.stringify(config || { pirEnabled: true, buzzerDuration: 5 }, null, 2)}
+              <pre className="text-xs text-accent-cyan font-mono mt-2 p-3 bg-ink-900/60 rounded-lg overflow-x-auto max-h-[32rem]">
+{JSON.stringify(config || {}, null, 2)}
               </pre>
             </div>
           </div>

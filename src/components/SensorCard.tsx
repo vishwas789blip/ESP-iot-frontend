@@ -12,10 +12,10 @@ function formatValue(sensor: Sensor): { display: string; isBinary: boolean; acti
   // Only treat as a binary/motion-style sensor when the value is actually
   // boolean-shaped, or the sensor is explicitly a PIR — never based on a
   // numeric reading coincidentally equaling 1 (e.g. 1°C, 1 lux, etc.).
-  const isBinary = sensor.type === 'pir' || typeof v === 'boolean' || v === 'true' || v === 'false' || v === 'HIGH' || v === 'LOW';
+  const isBinary = String(sensor.type).toLowerCase() === 'pir' || typeof v === 'boolean' || v === 'true' || v === 'false' || v === 'HIGH' || v === 'LOW';
   if (isBinary) {
     const active = v === true || v === 'true' || v === 1 || v === '1' || v === 'HIGH';
-    const label = sensor.type === 'pir'
+    const label = String(sensor.type).toLowerCase() === 'pir'
       ? (active ? 'MOTION DETECTED' : 'NO MOTION')
       : (active ? 'ACTIVE' : 'INACTIVE');
     return { display: label, isBinary: true, active };
