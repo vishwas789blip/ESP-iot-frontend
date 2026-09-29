@@ -13,26 +13,48 @@ export interface CreateActuatorInput {
   unit?: string;
 }
 
+type BackendActuator = Omit<Actuator, 'parameters' | 'unit'> & {
+  config?: Record<string, unknown>;
+};
+
+function normalizeActuator(actuator: BackendActuator): Actuator {
+  return {
+    ...actuator,
+    parameters: actuator.config ?? {},
+  };
+}
+
+function toBackendInput(data: Partial<CreateActuatorInput>) {
+  const { parameters, unit: _unit, ...rest } = data;
+  return {
+    ...rest,
+    ...(parameters !== undefined ? { config: parameters } : {}),
+  };
+}
+
 export const actuatorApi = {
   listByDevice: async (deviceId: string, signal?: AbortSignal): Promise<Actuator[]> => {
-    const response = await apiClient.get<ApiResponse<Actuator[]>>(
+    const response = await apiClient.get<ApiResponse<BackendActuator[]>>(
       `/devices/${deviceId}/actuators`,
       signal,
     );
-    return unwrapApiData(response);
+    return unwrapApiData(response).map(normalizeActuator);
   },
 
   create: async (deviceId: string, data: CreateActuatorInput): Promise<Actuator> => {
-    const response = await apiClient.post<ApiResponse<Actuator>>(
+    const response = await apiClient.post<ApiResponse<BackendActuator>>(
       `/devices/${deviceId}/actuators`,
-      data,
+      toBackendInput(data),
     );
-    return unwrapApiData(response);
+    return normalizeActuator(unwrapApiData(response));
   },
 
   update: async (id: string, data: Partial<CreateActuatorInput>): Promise<Actuator> => {
-    const response = await apiClient.put<ApiResponse<Actuator>>(`/actuators/${id}`, data);
-    return unwrapApiData(response);
+    const response = await apiClient.put<ApiResponse<BackendActuator>>(
+      `/actuators/${id}`,
+      toBackendInput(data),
+    );
+    return normalizeActuator(unwrapApiData(response));
   },
 
   remove: async (id: string): Promise<{ message: string }> => {
