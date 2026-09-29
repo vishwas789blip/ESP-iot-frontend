@@ -30,6 +30,7 @@ export function AutomationCard({
 }: AutomationCardProps) {
   const { show } = useToast();
   const [toggling, setToggling] = useState(false);
+  const [testing, setTesting] = useState(false);
 
   const handleToggle = async () => {
     setToggling(true);
@@ -52,6 +53,23 @@ export function AutomationCard({
     }
   };
 
+  const handleTest = async () => {
+  setTesting(true);
+
+  try {
+    const res = await automationApi.test(automation._id);
+    show(res?.message || 'Test command sent', res?.triggered ? 'success' : 'error');
+    onToggled?.();
+  } catch (err) {
+    const msg =
+      err && typeof err === 'object' && 'message' in err
+        ? (err as { message: string }).message
+        : 'Test failed';
+    show(msg, 'error');
+  } finally {
+    setTesting(false);
+  }
+};
 
   const condition = automation.conditions[0];
   const action = automation.actions[0];
@@ -143,9 +161,15 @@ export function AutomationCard({
             ? new Date(automation.lastExecuted).toLocaleString()
             : 'Never executed'}
         </div>
-
-        <div className="flex items-center gap-1">
-
+                <div className="flex items-center gap-1">
+          <button
+            onClick={handleTest}
+            disabled={testing || !automation.enabled}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-accent-green hover:bg-accent-green/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            title={automation.enabled ? 'Run test' : 'Enable automation to test'}
+          >
+            <Play className={`w-3.5 h-3.5 ${testing ? 'animate-pulse' : ''}`} />
+          </button>
 
           {onEdit && (
             <button
