@@ -4,7 +4,7 @@ import { useRealtimeData } from '@/hooks/useRealtimeData';
 import { useRealtime } from '@/context/RealtimeContext';
 import { deviceApi, sensorApi } from '@/services';
 import { useToast } from '@/context/ToastContext';
-import type { Device, Sensor } from '@/types';
+import type { Device, Sensor, HardwareInterface } from '@/types';
 import { SensorCard } from '@/components/SensorCard';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -13,6 +13,7 @@ import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
+import { HardwareConfigFields, parseJsonObject } from '@/components/HardwareConfigFields';
 
 export function SensorsPage() {
   const { show } = useToast();
@@ -47,7 +48,10 @@ export function SensorsPage() {
   const devices = useMemo(() => Object.values(liveDevices), [liveDevices]);
   const sensorsArray = useMemo(() => Object.values(liveSensors), [liveSensors]);
 
-  const [formData, setFormData] = useState({ name: '', type: 'pir', gpio: '26', unit: '' });
+  const [formData, setFormData] = useState({
+    name: '', type: 'pir', interfaceType: 'gpio' as HardwareInterface,
+    gpio: '26', pinsJson: '', address: '', parametersJson: '', unit: '',
+  });
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -60,15 +64,21 @@ export function SensorsPage() {
 
   const handleCreate = async () => {
     try {
+      const pins = parseJsonObject(formData.pinsJson, 'Pins');
+      const parameters = parseJsonObject(formData.parametersJson, 'Parameters');
       await sensorApi.create(addDeviceId, {
-        name: formData.name,
+        name: formData.name.trim(),
         type: formData.type,
-        gpio: Number(formData.gpio),
-        unit: formData.unit || undefined,
+        interface: formData.interfaceType,
+        gpio: formData.gpio.trim() ? Number(formData.gpio) : undefined,
+        pins,
+        address: formData.address.trim() || undefined,
+        parameters,
+        unit: formData.unit.trim() || undefined,
       });
       show('Sensor created', 'success');
       setAddOpen(false);
-      setFormData({ name: '', type: 'pir', gpio: '26', unit: '' });
+      setFormData({ name: '', type: 'pir', interfaceType: 'gpio', gpio: '26', pinsJson: '', address: '', parametersJson: '', unit: '' });
       refetch();
     } catch (err) {
       const msg = err && typeof err === 'object' && 'message' in err ? (err as { message: string }).message : 'Failed to create sensor';
@@ -155,10 +165,19 @@ export function SensorsPage() {
               { value: 'digital', label: 'Digital' },
             ]}
           />
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="GPIO Pin" type="number" placeholder="26" value={formData.gpio} onChange={(e) => setFormData({ ...formData, gpio: e.target.value })} />
-            <Input label="Unit (optional)" placeholder="°C, %, etc." value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} />
-          </div>
+          <HardwareConfigFields
+            interfaceType={formData.interfaceType}
+            onInterfaceChange={(interfaceType) => setFormData({ ...formData, interfaceType })}
+            gpio={formData.gpio}
+            onGpioChange={(gpio) => setFormData({ ...formData, gpio })}
+            pinsJson={formData.pinsJson}
+            onPinsChange={(pinsJson) => setFormData({ ...formData, pinsJson })}
+            address={formData.address}
+            onAddressChange={(address) => setFormData({ ...formData, address })}
+            parametersJson={formData.parametersJson}
+            onParametersChange={(parametersJson) => setFormData({ ...formData, parametersJson })}
+          />
+          <Input label="Unit (optional)" placeholder="°C, %, raw, boolean" value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} />
           <div className="flex gap-3 justify-end pt-2">
             <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={!formData.name || !addDeviceId}>Register Sensor</Button>

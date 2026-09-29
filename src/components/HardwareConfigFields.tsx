@@ -22,6 +22,7 @@ const INTERFACE_OPTIONS = [
   { value: 'i2c', label: 'I2C' },
   { value: 'spi', label: 'SPI' },
   { value: 'uart', label: 'UART' },
+  { value: 'virtual', label: 'Virtual' },
   { value: 'custom', label: 'Custom' },
 ];
 

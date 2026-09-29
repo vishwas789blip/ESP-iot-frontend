@@ -1,11 +1,16 @@
 import { apiClient } from './apiClient';
 import { unwrapApiData, type ApiResponse } from './apiTypes';
-import type { Actuator, CommandPayload } from '@/types';
+import type { Actuator, CommandPayload, HardwareInterface } from '@/types';
 
 export interface CreateActuatorInput {
   name: string;
   type: string;
-  gpio: number;
+  interface?: HardwareInterface;
+  gpio?: number;
+  pins?: Record<string, number | string>;
+  address?: string;
+  parameters?: Record<string, unknown>;
+  unit?: string;
 }
 
 export const actuatorApi = {

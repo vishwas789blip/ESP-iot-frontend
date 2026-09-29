@@ -4,7 +4,7 @@ import { useRealtimeData } from '@/hooks/useRealtimeData';
 import { useRealtime } from '@/context/RealtimeContext';
 import { deviceApi, actuatorApi } from '@/services';
 import { useToast } from '@/context/ToastContext';
-import type { Device, Actuator } from '@/types';
+import type { Device, Actuator, HardwareInterface } from '@/types';
 import { ActuatorCard } from '@/components/ActuatorCard';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -13,6 +13,7 @@ import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
+import { HardwareConfigFields, parseJsonObject } from '@/components/HardwareConfigFields';
 
 export function ActuatorsPage() {
   const { show } = useToast();
@@ -21,7 +22,10 @@ export function ActuatorsPage() {
   const [deviceFilter, setDeviceFilter] = useState('all');
   const [addOpen, setAddOpen] = useState(false);
   const [addDeviceId, setAddDeviceId] = useState('');
-  const [formData, setFormData] = useState({ name: '', type: 'buzzer', gpio: '27' });
+  const [formData, setFormData] = useState({
+    name: '', type: 'buzzer', interfaceType: 'gpio' as HardwareInterface,
+    gpio: '27', pinsJson: '', address: '', parametersJson: '',
+  });
 
   const { loading: devicesLoading } = useRealtimeData<Device[]>({
     fetcher: (signal) => deviceApi.list(signal),
@@ -59,14 +63,20 @@ export function ActuatorsPage() {
 
   const handleCreate = async () => {
     try {
+      const pins = parseJsonObject(formData.pinsJson, 'Pins');
+      const parameters = parseJsonObject(formData.parametersJson, 'Parameters');
       await actuatorApi.create(addDeviceId, {
-        name: formData.name,
+        name: formData.name.trim(),
         type: formData.type,
-        gpio: Number(formData.gpio),
+        interface: formData.interfaceType,
+        gpio: formData.gpio.trim() ? Number(formData.gpio) : undefined,
+        pins,
+        address: formData.address.trim() || undefined,
+        parameters,
       });
       show('Actuator created', 'success');
       setAddOpen(false);
-      setFormData({ name: '', type: 'buzzer', gpio: '27' });
+      setFormData({ name: '', type: 'buzzer', interfaceType: 'gpio', gpio: '27', pinsJson: '', address: '', parametersJson: '' });
       refetch();
     } catch (err) {
       const msg = err && typeof err === 'object' && 'message' in err ? (err as { message: string }).message : 'Failed to create actuator';
@@ -91,7 +101,7 @@ export function ActuatorsPage() {
             onChange={(e) => setDeviceFilter(e.target.value)}
             options={[
               { value: 'all', label: 'All Devices' },
-              ...devices.map((d) => ({ value: d.deviceId, label: d.name })),
+              ...devices.map((d) => ({ value: d._id, label: d.name })),
             ]}
             className="sm:w-40"
           />
@@ -148,10 +158,25 @@ export function ActuatorsPage() {
               { value: 'relay', label: 'Relay' },
               { value: 'led', label: 'LED' },
               { value: 'motor', label: 'Motor' },
+              { value: 'servo', label: 'Servo' },
+              { value: 'fan', label: 'Fan' },
               { value: 'switch', label: 'Switch' },
+              { value: 'virtual', label: 'Virtual' },
+              { value: 'custom', label: 'Custom' },
             ]}
           />
-          <Input label="GPIO Pin" type="number" placeholder="27" value={formData.gpio} onChange={(e) => setFormData({ ...formData, gpio: e.target.value })} />
+          <HardwareConfigFields
+            interfaceType={formData.interfaceType}
+            onInterfaceChange={(interfaceType) => setFormData({ ...formData, interfaceType })}
+            gpio={formData.gpio}
+            onGpioChange={(gpio) => setFormData({ ...formData, gpio })}
+            pinsJson={formData.pinsJson}
+            onPinsChange={(pinsJson) => setFormData({ ...formData, pinsJson })}
+            address={formData.address}
+            onAddressChange={(address) => setFormData({ ...formData, address })}
+            parametersJson={formData.parametersJson}
+            onParametersChange={(parametersJson) => setFormData({ ...formData, parametersJson })}
+          />
           <div className="flex gap-3 justify-end pt-2">
             <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={!formData.name || !addDeviceId}>Register Actuator</Button>

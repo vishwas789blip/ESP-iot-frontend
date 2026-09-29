@@ -260,7 +260,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           setSensors((prev) => {
             const next = { ...prev };
             for (const sensor of Object.values(next)) {
-              if (sensor.deviceId === mongoDeviceId && sensor.type === 'pir') {
+              if (sensor.deviceId === mongoDeviceId && String(sensor.type).toLowerCase() === 'pir') {
                 next[sensor._id] = {
                   ...sensor,
                   value: pir,
@@ -277,7 +277,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           setActuators((prev) => {
             const next = { ...prev };
             for (const actuator of Object.values(next)) {
-              if (actuator.deviceId === mongoDeviceId && actuator.type === 'buzzer') {
+              if (actuator.deviceId === mongoDeviceId && String(actuator.type).toLowerCase() === 'buzzer') {
                 next[actuator._id] = {
                   ...actuator,
                   state: buzzer,

@@ -29,8 +29,15 @@ export interface Device {
 }
 
 export interface DeviceConfig {
-  pirEnabled?: boolean;
-  buzzerDuration?: number;
+  protocolVersion?: string;
+  telemetryInterval?: number;
+  mqttKeepAlive?: number;
+  autoReconnect?: boolean;
+  maxAutomations?: number;
+  supportedInterfaces?: HardwareInterface[];
+  sensors?: Array<Record<string, unknown>>;
+  actuators?: Array<Record<string, unknown>>;
+  automations?: Array<Record<string, unknown>>;
   [key: string]: unknown;
 }
 
@@ -38,7 +45,7 @@ export interface DeviceConfig {
 // NEW: Hardware interface (sensor/actuator kis tarah ESP32 se juda hai)
 // HardwareConfigFields.tsx ke dropdown ki values isi se match honi chahiye.
 // ---------------------------------------------------------------------------
-export type HardwareInterface = 'gpio' | 'pwm' | 'adc' | 'i2c' | 'spi' | 'uart' | 'custom';
+export type HardwareInterface = 'gpio' | 'pwm' | 'adc' | 'i2c' | 'spi' | 'uart' | 'virtual' | 'custom';
 
 // NEW: Sensor aur Actuator dono ke common hardware fields
 export interface HardwareConfig {
@@ -71,6 +78,7 @@ export interface Actuator extends HardwareConfig {
   name: string;
   type: ActuatorType;
   state: string | boolean;
+  unit?: string;
   lastActivated?: string;
 }
 

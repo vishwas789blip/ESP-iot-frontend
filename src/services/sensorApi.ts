@@ -1,11 +1,15 @@
 import { apiClient } from './apiClient';
 import { unwrapApiData, type ApiResponse } from './apiTypes';
-import type { Sensor } from '@/types';
+import type { Sensor, HardwareInterface } from '@/types';
 
 export interface CreateSensorInput {
   name: string;
   type: string;
-  gpio: number;
+  interface?: HardwareInterface;
+  gpio?: number;
+  pins?: Record<string, number | string>;
+  address?: string;
+  parameters?: Record<string, unknown>;
   unit?: string;
 }
 
