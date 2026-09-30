@@ -58,6 +58,7 @@ export interface HardwareConfig {
 
 export type SensorType = 'pir' | 'temperature' | 'humidity' | 'light' | 'analog' | 'digital' | string;
 export type SensorStatus = 'active' | 'inactive' | 'error' | 'warning';
+export type SensorHealthStatus = 'healthy' | 'stale' | 'unknown' | 'invalid' | 'unverified';
 
 export interface Sensor extends HardwareConfig {
   _id: string;
@@ -67,6 +68,7 @@ export interface Sensor extends HardwareConfig {
   value: string | number | boolean | null;
   unit?: string;
   status: SensorStatus;
+  healthStatus?: SensorHealthStatus;
   lastUpdated?: string;
 }
 

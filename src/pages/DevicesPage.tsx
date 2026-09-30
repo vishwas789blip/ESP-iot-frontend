@@ -56,7 +56,7 @@ export function DevicesPage() {
       await deviceApi.create(formData);
       show('Device created successfully', 'success');
       setAddOpen(false);
-      setFormData({ deviceId: 'esp32-', name: '', description: '', connectionType: 'WiFi', ipAddress: '', firmwareVersion: 'Phase-6' });
+      setFormData({ deviceId: 'esp32-', name: '', description: '', connectionType: 'wifi', ipAddress: '', firmwareVersion: 'Phase-6' });
       refetch();
     } catch (err) {
       const msg = err && typeof err === 'object' && 'message' in err ? (err as { message: string }).message : 'Failed to create device';

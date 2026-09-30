@@ -25,6 +25,9 @@ function formatValue(sensor: Sensor): { display: string; isBinary: boolean; acti
 
 export function SensorCard({ sensor, onClick }: SensorCardProps) {
   const { display, isBinary, active } = formatValue(sensor);
+  const health = sensor.healthStatus || 'unknown';
+  const healthUnverified = health === 'unverified' || health === 'stale' || health === 'invalid';
+  const safeDisplay = healthUnverified ? '—' : display;
 
   if (isBinary) {
     return (
@@ -53,7 +56,7 @@ export function SensorCard({ sensor, onClick }: SensorCardProps) {
               <p className="text-xs text-gray-500 font-mono capitalize">{sensor.type} · GPIO {sensor.gpio}</p>
             </div>
           </div>
-          <StatusBadge status={sensor.status} size="sm" />
+          <div className="flex items-center gap-2"><StatusBadge status={sensor.status} size="sm" /><StatusBadge status={health} size="sm" /></div>
         </div>
 
         <div className="relative flex flex-col items-center justify-center py-6">
@@ -65,7 +68,7 @@ export function SensorCard({ sensor, onClick }: SensorCardProps) {
                   <Radio className="w-9 h-9 text-accent-cyan animate-pulse" />
                 </div>
               </div>
-              <p className="text-xl font-bold text-accent-cyan mt-4 tracking-wide">{display}</p>
+              <p className="text-xl font-bold text-accent-cyan mt-4 tracking-wide">{safeDisplay}</p>
               {sensor.lastUpdated && (
                 <p className="text-xs text-gray-500 mt-1">
                   {new Date(sensor.lastUpdated).toLocaleTimeString()}
@@ -77,8 +80,8 @@ export function SensorCard({ sensor, onClick }: SensorCardProps) {
               <div className="w-20 h-20 rounded-full bg-ink-700/60 border-2 border-white/5 flex items-center justify-center">
                 <Radio className="w-9 h-9 text-gray-600" />
               </div>
-              <p className="text-xl font-bold text-gray-500 mt-4 tracking-wide">{display}</p>
-              <p className="text-xs text-gray-600 mt-1">Monitoring</p>
+              <p className="text-xl font-bold text-gray-500 mt-4 tracking-wide">{safeDisplay}</p>
+              <p className="text-xs text-gray-600 mt-1">{health === 'unverified' ? 'Reading not verified' : health === 'stale' ? 'No recent telemetry' : 'Monitoring'}</p>
             </>
           )}
         </div>
@@ -101,14 +104,14 @@ export function SensorCard({ sensor, onClick }: SensorCardProps) {
             <p className="text-xs text-gray-500 font-mono capitalize">{sensor.type} · GPIO {sensor.gpio}</p>
           </div>
         </div>
-        <StatusBadge status={sensor.status} size="sm" />
+        <div className="flex items-center gap-2"><StatusBadge status={sensor.status} size="sm" /><StatusBadge status={health} size="sm" /></div>
       </div>
       <div className="flex items-end justify-between pt-3 border-t border-white/5">
         <div>
           <p className="text-xs text-gray-500 uppercase tracking-wide">Current Value</p>
           <p className="text-2xl font-bold text-white tabular-nums mt-1">
-            {display}
-            {sensor.unit && <span className="text-sm text-gray-500 ml-1">{sensor.unit}</span>}
+            {safeDisplay}
+            {!healthUnverified && sensor.unit && <span className="text-sm text-gray-500 ml-1">{sensor.unit}</span>}
           </p>
         </div>
         {sensor.lastUpdated && (

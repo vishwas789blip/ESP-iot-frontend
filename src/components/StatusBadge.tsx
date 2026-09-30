@@ -41,6 +41,11 @@ const config: Record<
     ring: 'ring-accent-green/30',
     pulse: false,
   },
+  healthy: { label: 'Healthy', color: 'text-accent-green', bg: 'bg-accent-green/10', ring: 'ring-accent-green/30', pulse: false },
+  stale: { label: 'Stale', color: 'text-accent-amber', bg: 'bg-accent-amber/10', ring: 'ring-accent-amber/30', pulse: false },
+  unknown: { label: 'Unknown', color: 'text-gray-400', bg: 'bg-gray-500/10', ring: 'ring-gray-500/30', pulse: false },
+  invalid: { label: 'Invalid', color: 'text-accent-red', bg: 'bg-accent-red/10', ring: 'ring-accent-red/30', pulse: false },
+  unverified: { label: 'Unverified', color: 'text-accent-amber', bg: 'bg-accent-amber/10', ring: 'ring-accent-amber/30', pulse: false },
 };
 
 export function StatusDot({ status, size = 'md' }: { status: DeviceStatus | string; size?: 'sm' | 'md' | 'lg' }) {
